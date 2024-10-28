@@ -8,3 +8,7 @@ export interface StepintoBaseProps extends StackProps {
   env: Environment;
   appName: string;
 }
+
+export interface StepintoBaseConstructProps extends StepintoBaseProps {
+  constructName: string;
+}
