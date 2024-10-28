@@ -1,6 +1,6 @@
 {
   "name": "stepinto-aws-tools",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "packageManager": "yarn@4.5.0",
   "scripts": {
     "test": "jest"

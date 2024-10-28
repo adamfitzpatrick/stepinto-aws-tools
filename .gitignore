@@ -13,6 +13,7 @@
 .pnp.*
 
 .vscode
+.npmrc
 
 # dotenv values
 .env.local
