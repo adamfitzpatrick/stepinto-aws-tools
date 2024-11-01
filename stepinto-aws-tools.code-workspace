@@ -19,8 +19,8 @@
             "**/CVS": true,
             "**/.DS_Store": true,
             "**/Thumbs.db": true,
-            "**/*.d.ts": false,
-            "**/*.js": false,
+            "**/*.d.ts": true,
+            "**/*.js": true,
             ".yarn": true
         },
         "markdown-preview-github-styles.colorTheme": "light",

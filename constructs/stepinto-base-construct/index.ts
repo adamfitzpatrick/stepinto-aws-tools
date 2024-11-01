@@ -1,17 +1,13 @@
 import { Construct } from "constructs";
 import { generateIdGenerator, generateNameGenerator, NameGenerator } from "../../utils/naming-tools";
-import { Environment, StepintoBaseProps } from "../../types";
-
-export interface StepintoBaseConstructProps extends StepintoBaseProps {
-  constructName: string;
-}
+import { Environment, StepintoBaseConstructProps } from "../../types";
 
 export class StepintoBaseConstruct extends Construct {
   readonly appName: string;
   readonly env: Environment
   readonly generateId: NameGenerator;
   readonly generateName: NameGenerator;
-  readonly generateEnvGeneralName: NameGenerator;
+  readonly generateEnvGenericName: NameGenerator;
 
   constructor(scope: Construct, id: string, props: StepintoBaseConstructProps) {
     super(scope, id);
@@ -24,7 +20,7 @@ export class StepintoBaseConstruct extends Construct {
     this.generateName = (resourceType: string) => {
       return generateNameGenerator(this.appName, props.env)(`${props.constructName}-${resourceType}`);
     };
-    this.generateEnvGeneralName = (unique: string) => {
+    this.generateEnvGenericName = (unique: string) => {
       return generateNameGenerator('', props.env)(unique);
     };
   }

@@ -1,6 +1,6 @@
-import { StepintoBaseConstruct, StepintoBaseConstructProps } from '.';
+import { StepintoBaseConstruct } from '.';
 import { App } from 'aws-cdk-lib';
-import { StepintoBaseProps } from '../../types';
+import { StepintoBaseConstructProps } from '../../types';
 
 
 describe('GridWolfConstuct construct', () => {
@@ -29,6 +29,6 @@ describe('GridWolfConstuct construct', () => {
   });
 
   test('generateEnvGeneralName should include only the environment and reource name', () => {
-    expect(sut.generateEnvGeneralName('resource')).toBe('tst-resource');
+    expect(sut.generateEnvGenericName('resource')).toBe('tst-resource');
   })
 });

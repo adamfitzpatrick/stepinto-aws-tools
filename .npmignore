@@ -1,1 +1,8 @@
 coverage
+.yarn
+**/*.ts
+!*.d.ts
+jest.config.mjs
+preinstall.sh
+stepinto-aws-tools.code-workspace
+yarn.config.cjs

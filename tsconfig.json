@@ -1,14 +1,15 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "commonjs",
+    "module": "CommonJS",
     "lib": [
       "es2020",
       "dom",
       "dom.iterable"
     ],
+    "moduleResolution": "node",
     "esModuleInterop": true,
-    "declaration": false,
+    "declaration": true,
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
@@ -23,10 +24,5 @@
     "experimentalDecorators": true,
     "strictPropertyInitialization": false,
     "resolveJsonModule": true
-  },
-  "ts-node": {
-    "compilerOptions": {
-      "module": "commonjs"
-    }
   }
 }
