@@ -1,8 +1,11 @@
+.vscode
 coverage
 .yarn
 **/*.ts
 !*.d.ts
+**/*.test.js
 jest.config.mjs
+tsconfig.json
 preinstall.sh
 stepinto-aws-tools.code-workspace
 yarn.config.cjs

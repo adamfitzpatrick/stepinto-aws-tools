@@ -1,6 +1,5 @@
-import { StepintoBaseConstruct } from '.';
+import { StepintoBaseConstruct, StepintoBaseConstructProps } from '.';
 import { App } from 'aws-cdk-lib';
-import { StepintoBaseConstructProps } from '../../types';
 
 
 describe('GridWolfConstuct construct', () => {

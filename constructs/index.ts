@@ -1,2 +1,2 @@
-export { StepintoBaseStack } from './stepinto-base-stack';
-export { StepintoBaseConstruct } from './stepinto-base-construct';
+export { StepintoBaseStack, Environment, StepintoBaseProps } from './stepinto-base-stack';
+export { StepintoBaseConstruct, StepintoBaseConstructProps } from './stepinto-base-construct';

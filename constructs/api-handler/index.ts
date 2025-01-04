@@ -2,8 +2,7 @@ import { Construct } from "constructs";
 import { Effect, PolicyDocument, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import { Code, Function as LambdaFunction, LayerVersion, LoggingFormat, Runtime, Tracing } from 'aws-cdk-lib/aws-lambda'
 import { Duration, Fn } from "aws-cdk-lib";
-import { StepintoBaseConstruct } from "..";
-import { StepintoBaseConstructProps } from "../../types";
+import { StepintoBaseConstruct, StepintoBaseConstructProps } from "..";
 
 const SECRETS_LAMBDA_EXTENSION_ARN =
   'arn:aws:lambda:us-west-2:345057560386:layer:AWS-Parameters-and-Secrets-Lambda-Extension:12';

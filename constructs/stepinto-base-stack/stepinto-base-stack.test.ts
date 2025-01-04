@@ -1,9 +1,8 @@
 import { Construct } from "constructs";
-import { StepintoBaseStack } from ".";
+import { StepintoBaseStack, StepintoBaseProps } from ".";
 import { App } from "aws-cdk-lib";
 import { Template } from "aws-cdk-lib/assertions";
 import { Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
-import { StepintoBaseProps } from "../../types";
 
 class ExtensionStack extends StepintoBaseStack {
 

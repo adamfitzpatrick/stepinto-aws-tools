@@ -1,7 +1,16 @@
 import { Stack, Tags } from 'aws-cdk-lib';
-import { Environment, StepintoBaseProps } from '../../types';
 import { Construct } from 'constructs';
 import { generateIdGenerator, generateNameGenerator } from '../../utils/naming-tools';
+import { StackProps, Environment as CdkEnvironment } from "aws-cdk-lib";
+
+export type Environment = Required<CdkEnvironment> & {
+  prefix: string;
+}
+
+export interface StepintoBaseProps extends StackProps {
+  env: Environment;
+  appName: string;
+}
 
 const baseTags: { [key: string]: string } = {
   organization: 'stepinto.io',

@@ -1,6 +1,10 @@
 import { Construct } from "constructs";
 import { generateIdGenerator, generateNameGenerator, NameGenerator } from "../../utils/naming-tools";
-import { Environment, StepintoBaseConstructProps } from "../../types";
+import { Environment, StepintoBaseProps } from "../stepinto-base-stack";
+
+export interface StepintoBaseConstructProps extends StepintoBaseProps {
+  constructName: string;
+}
 
 export class StepintoBaseConstruct extends Construct {
   readonly appName: string;

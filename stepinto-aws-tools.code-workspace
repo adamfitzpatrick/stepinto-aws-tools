@@ -24,10 +24,8 @@
             ".yarn": true
         },
         "markdown-preview-github-styles.colorTheme": "light",
-        "jest.disabledWorkspaceFolders": [
-            "grid-wolf",
-            "docs"
-        ],
+        "jest.disabledWorkspaceFolders": [],
+        "jest.runMode": "on-save",
         "emmet.showExpandedAbbreviation": "never",
         "liveServer.settings.multiRootWorkspaceName": "grid-wolf",
         "svg.preview.background": "white"
