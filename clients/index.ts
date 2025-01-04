@@ -1,5 +1,5 @@
 export {
   DynamoItem,
-  DynamoItemNamespace,
+  ObjectMapper,
   DynamoItemDao
 } from './dynamo-item-dao'
