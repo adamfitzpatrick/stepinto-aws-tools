@@ -1,6 +1,6 @@
 {
   "name": "stepinto-aws-tools",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "packageManager": "yarn@4.5.0",
   "exports": {
     "./clients": "./clients/index.js",

@@ -1,4 +1,4 @@
-import { DynamoItemDao, DynamoItem } from ".";
+import { DynamoItemDao, DynamoItem, ObjectMapper } from ".";
 import { AttributeValue } from "@aws-sdk/client-dynamodb";
 
 const sendSpy = jest.fn();
@@ -21,42 +21,46 @@ jest.mock('@aws-sdk/client-dynamodb', function () {
   }
 });
 
+interface TestDTO {
+  a: string;
+  b: string;
+}
+
 describe('dynamo-item-dao', () => {
-  let unmarshalledFirstItem: DynamoItem;
-  let unmarshalledSecondItem: DynamoItem;
+  let unmarshalledFirstItem: TestDTO;
+  let unmarshalledSecondItem: TestDTO;
   let marshalledFirstItem: Record<string, AttributeValue>;
   let marshalledSecondItem: Record<string, AttributeValue>;
-  let sut: DynamoItemDao<DynamoItem>;
+  let sut: DynamoItemDao<DynamoItem, TestDTO>;
 
   beforeEach(() => {
     unmarshalledFirstItem = {
-      pk: 'primary#id',
-      sk: 'sort#value'
+      a: 'id',
+      b: 'value'
     };
     marshalledFirstItem = {
-      pk: {
-        S: 'primary#id'
-      },
-      sk: {
-        S: 'sort#value'
-      }
+      pk: { S: 'primary#id' },
+      sk: { S: 'sort#value' },
+      a: { S: 'id' },
+      b: { S: 'value' }
     };
     unmarshalledSecondItem = {
-      pk: 'primary#id',
-      sk: 'sort#value2'
+      a: 'id',
+      b: 'value2'
     };
     marshalledSecondItem = {
-      pk: {
-        S: 'primary#id'
-      },
-      sk: {
-        S: 'sort#value2'
-      }
+      pk: { S: 'primary#id' },
+      sk: { S: 'sort#value2' },
+      a: { S: 'id' },
+      b: { S: 'value2' }
     };
-    sut = new DynamoItemDao<DynamoItem>( 'Table', {
+    const mapper = new ObjectMapper<DynamoItem, TestDTO>({
       pkPrefix: 'primary',
-      skPrefix: 'sort'
+      skPrefix: 'sort',
+      pkFieldName: 'a',
+      skFieldName: 'b'
     });
+    sut = new DynamoItemDao<DynamoItem, TestDTO>( 'Table', mapper);
   });
 
   afterEach(() => {
@@ -75,12 +79,8 @@ describe('dynamo-item-dao', () => {
       expect(getItemCommandSpy).toHaveBeenCalledWith({
         TableName: 'Table',
         Key: {
-          pk: {
-            S: 'primary#id'
-          },
-          sk: {
-            S: 'sort#value'
-          }
+          pk: { S: 'primary#id' },
+          sk: { S: 'sort#value' }
         }
       });
     });
@@ -92,19 +92,10 @@ describe('dynamo-item-dao', () => {
       expect(getItemCommandSpy).toHaveBeenCalledWith({
         TableName: 'Table',
         Key: {
-          pk: {
-            S: 'primary#id'
-          },
-          sk: {
-            S: 'sort#value'
-          }
+          pk: { S: 'primary#id' },
+          sk: { S: 'sort#value' }
         }
       });
-    });
-
-    test('should reject if the item requested does not match client item namespace', async () => {
-      await expect(sut.get('wrong#id', 'alsoWrong#value')).rejects.toThrow('Invalid');
-      expect(getItemCommandSpy).not.toHaveBeenCalled();
     });
 
     test('should reject if there was an error calling DynamoDB', async () => {
@@ -123,12 +114,8 @@ describe('dynamo-item-dao', () => {
       expect(queryCommandSpy).toHaveBeenCalledWith({
         TableName: 'Table',
         ExpressionAttributeValues: {
-          ':pk': {
-            S: 'primary#id'
-          },
-          ':sk': {
-            S: 'sort#'
-          }
+          ':pk': { S: 'primary#id' },
+          ':sk': { S: 'sort#' }
         },
         KeyConditionExpression: 'pk = :pk AND begins_with(sk, :sk)'
       })
@@ -146,12 +133,8 @@ describe('dynamo-item-dao', () => {
       expect(queryCommandSpy).toHaveBeenCalledWith({
         TableName: 'Table',
         ExpressionAttributeValues: {
-          ':pk': {
-            S: 'primary#id'
-          },
-          ':sk': {
-            S: 'sort#'
-          }
+          ':pk': { S: 'primary#id' },
+          ':sk': { S: 'sort#' }
         },
         KeyConditionExpression: 'pk = :pk AND begins_with(sk, :sk)'
       })
@@ -176,33 +159,23 @@ describe('dynamo-item-dao', () => {
       expect(queryCommandSpy).toHaveBeenNthCalledWith(1, {
         TableName: 'Table',
         ExpressionAttributeValues: {
-          ':pk': {
-            S: 'primary#id'
-          },
-          ':sk': {
-            S: 'sort#'
-          }
+          ':pk': { S: 'primary#id' },
+          ':sk': { S: 'sort#' }
         },
         KeyConditionExpression: 'pk = :pk AND begins_with(sk, :sk)'
       });
       expect(queryCommandSpy).toHaveBeenNthCalledWith(2, {
         TableName: 'Table',
         ExpressionAttributeValues: {
-          ':pk': {
-            S: 'primary#id'
-          },
-          ':sk': {
-            S: 'sort#'
-          }
+          ':pk': { S: 'primary#id' },
+          ':sk': { S: 'sort#' }
         },
         KeyConditionExpression: 'pk = :pk AND begins_with(sk, :sk)',
-        ExclusiveStartKey: marshalledFirstItem
+        ExclusiveStartKey: {
+          pk: { S: 'primary#id' },
+          sk: { S: 'sort#value' }
+        }
       });
-    });
-
-    test('should reject if the requested primary key does not match the client namespace', async () => {
-      await expect(sut.getAll('wrong#id')).rejects.toThrow('Invalid');
-      expect(queryCommandSpy).not.toHaveBeenCalled();
     });
 
     test('should reject if there was an error calling DynamoDB', async () => {
@@ -253,16 +226,18 @@ describe('dynamo-item-dao', () => {
     });
 
     test('should make multiple calls when there are more than 25 items', async () => {
-      const additionalUnmarshalledItems: DynamoItem[] = [];
+      const additionalUnmarshalledItems: TestDTO[] = [];
       const additionalMarshalledItems: Record<string, AttributeValue>[] = [];
       for (let k = 0; k < 25; k++) {
         additionalUnmarshalledItems.push({
-          pk: 'primary#id2',
-          sk: `sort#value${k+3}`
+          a: 'id2',
+          b: `value${k+3}`
         });
         additionalMarshalledItems.push({
           pk: { S: 'primary#id2' },
-          sk: { S: `sort#value${k+3}` }
+          sk: { S: `sort#value${k+3}` },
+          a: { S: 'id2' },
+          b: { S: `value${k+3}` }
         });
       }
       const allMarshalledItems = [ marshalledFirstItem, marshalledSecondItem, ...additionalMarshalledItems ];
@@ -290,16 +265,6 @@ describe('dynamo-item-dao', () => {
           })
         }
       });
-    });
-
-    test('should reject if any item key prefix does not match client namespace', async () => {
-      unmarshalledSecondItem.sk = 'wrong#value2';
-
-      await expect(sut.put(unmarshalledSecondItem)).rejects.toThrow('Invalid');
-      await expect(sut.put([unmarshalledFirstItem, unmarshalledSecondItem])).rejects.toThrow('Invalid');
-
-      expect(putItemCommandSpy).not.toHaveBeenCalled();
-      expect(batchWriteItemCommandSpy).not.toHaveBeenCalled();
     });
 
     test('should reject if there was an error calling DynamoDB', async () => {
