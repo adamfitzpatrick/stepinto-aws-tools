@@ -1,6 +1,6 @@
 import { Construct } from "constructs";
 import { Effect, PolicyDocument, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
-import { Code, Function as LambdaFunction, LayerVersion, LoggingFormat, Runtime, Tracing } from 'aws-cdk-lib/aws-lambda'
+import { ApplicationLogLevel, Code, Function as LambdaFunction, LayerVersion, LoggingFormat, Runtime, Tracing } from 'aws-cdk-lib/aws-lambda'
 import { Duration, Fn } from "aws-cdk-lib";
 import { StepintoBaseConstruct, StepintoBaseConstructProps } from "..";
 
@@ -9,7 +9,9 @@ const SECRETS_LAMBDA_EXTENSION_ARN =
 
 export interface ApiHandlerProps extends StepintoBaseConstructProps {
   handlerPath: string;
+  handler?: string;
   dataTableName: string;
+  usesSecrets?: boolean;
   layers: { [layerId: string]: string }
   additionalEnvironmentVariables?: { [key: string]: string };
   additionalHandlerPolicies?: PolicyStatement[];
@@ -74,11 +76,14 @@ export class ApiHandler extends StepintoBaseConstruct {
     const layers = Object.keys(props.layers).map(key => {
       return LayerVersion.fromLayerVersionArn(this, this.generateId(key), props.layers[key]);
     });
-    layers.push(LayerVersion.fromLayerVersionArn(
-      this,
-      this.generateId('secrets-layer'),
-      SECRETS_LAMBDA_EXTENSION_ARN
-    ));
+    if (props.usesSecrets) {
+      const secretsExtensionsLayer = LayerVersion.fromLayerVersionArn(
+        this,
+        this.generateId('secrets-layer'),
+        SECRETS_LAMBDA_EXTENSION_ARN
+      );
+      layers.push(secretsExtensionsLayer);
+    }
     
     const additionalEnvironmentVariables = props.additionalEnvironmentVariables || {};
     const environment = {
@@ -89,12 +94,13 @@ export class ApiHandler extends StepintoBaseConstruct {
       functionName: this.generateName('handler'),
       runtime: Runtime.NODEJS_20_X,
       code: Code.fromAsset(props.handlerPath),
-      handler: 'index.handler',
+      handler: props.handler || 'index.handler',
       tracing: Tracing.ACTIVE,
       environment,
       layers,
       role,
       timeout: Duration.minutes(1),
+      applicationLogLevelV2: ApplicationLogLevel.INFO,
       loggingFormat: LoggingFormat.JSON
     });
   }

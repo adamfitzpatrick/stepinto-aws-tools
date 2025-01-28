@@ -83,6 +83,14 @@ describe('api-handler construct', () => {
     });
   });
 
+  test('should use a custom handler if specified', () => {
+    props.handler = 'custom/index.handler';
+    generateStack();
+    template.hasResourceProperties('AWS::Lambda::Function', {
+      Handler: 'custom/index.handler'
+    });
+  });
+
   test('should create the handler lambda function', () => {
     template.hasResourceProperties('AWS::Lambda::Function', {
       FunctionName: 'tst-grid-wolf-apihandler-test-handler',
@@ -96,12 +104,22 @@ describe('api-handler construct', () => {
         }
       },
       Layers: [
-        Match.anyValue(),
         Match.anyValue()
       ],
       Role: Match.anyValue()
     });
   });
+
+  test('should include a secrets layer is required', () => {
+    props.usesSecrets = true;
+    generateStack();
+    template.hasResourceProperties('AWS::Lambda::Function', {
+      Layers: [
+        Match.anyValue(),
+        Match.stringLikeRegexp('AWS-Parameters-and-Secrets')
+      ]
+    });
+  })
 
   test('should include any additional environment variables', () => {
     props.additionalEnvironmentVariables = {
