@@ -4665,6 +4665,11 @@ __metadata:
     ts-node: "npm:^10.9.2"
     typescript: "npm:5.5.4"
     yaml: "npm:^2.7.0"
+  peerDependencies:
+    "@aws-sdk/client-dynamodb": ^3.716.0
+    aws-cdk-lib: 2.160.0
+    constructs: 10.3.0
+    typescript: 5.5.4
   languageName: unknown
   linkType: soft
 

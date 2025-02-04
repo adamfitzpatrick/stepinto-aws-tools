@@ -5,6 +5,7 @@ const sendSpy = jest.fn();
 const getItemCommandSpy = jest.fn();
 const queryCommandSpy = jest.fn();
 const putItemCommandSpy = jest.fn();
+const deleteItemCommandSpy = jest.fn();
 const batchWriteItemCommandSpy = jest.fn();
 
 jest.mock('@aws-sdk/client-dynamodb', function () {
@@ -12,6 +13,7 @@ jest.mock('@aws-sdk/client-dynamodb', function () {
     GetItemCommand: function (input: any) { return getItemCommandSpy(input); },
     QueryCommand: function (input: any) { return queryCommandSpy(input); },
     PutItemCommand: function (input: any) { return putItemCommandSpy(input); },
+    DeleteItemCommand: function (input: any) { return deleteItemCommandSpy(input); },
     BatchWriteItemCommand: function (input: any) { return batchWriteItemCommandSpy(input); },
     DynamoDBClient: function () {
       return {
@@ -73,7 +75,7 @@ describe('dynamo-item-dao', () => {
         Item: marshalledFirstItem
       });
 
-      const item = await sut.get('primary#id', 'sort#value');
+      const item = await sut.get('id', 'value');
 
       expect(item).toEqual(unmarshalledFirstItem);
       expect(getItemCommandSpy).toHaveBeenCalledWith({
@@ -88,7 +90,7 @@ describe('dynamo-item-dao', () => {
     test('should return null if the item cannot be found', async () => {
       sendSpy.mockResolvedValue({});
 
-      await expect(sut.get('primary#id', 'sort#value')).resolves.toBeNull();
+      await expect(sut.get('id', 'value')).resolves.toBeNull();
       expect(getItemCommandSpy).toHaveBeenCalledWith({
         TableName: 'Table',
         Key: {
@@ -110,7 +112,7 @@ describe('dynamo-item-dao', () => {
         Items: [marshalledFirstItem]
       });
 
-      await expect(sut.getAll('primary#id')).resolves.toEqual([unmarshalledFirstItem]);
+      await expect(sut.getAll('id')).resolves.toEqual([unmarshalledFirstItem]);
       expect(queryCommandSpy).toHaveBeenCalledWith({
         TableName: 'Table',
         ExpressionAttributeValues: {
@@ -126,7 +128,7 @@ describe('dynamo-item-dao', () => {
         Items: []
       });
       
-      await expect(sut.getAll('primary#id')).resolves.toEqual([]);
+      await expect(sut.getAll('id')).resolves.toEqual([]);
 
       expect(queryCommandSpy).toHaveBeenCalledTimes(1);
       expect(sendSpy).toHaveBeenCalledTimes(1);
@@ -152,7 +154,7 @@ describe('dynamo-item-dao', () => {
         Items: [marshalledSecondItem]
       });
 
-      await expect(sut.getAll('primary#id')).resolves.toEqual([ unmarshalledFirstItem, unmarshalledSecondItem ]);
+      await expect(sut.getAll('id')).resolves.toEqual([ unmarshalledFirstItem, unmarshalledSecondItem ]);
 
       expect(queryCommandSpy).toHaveBeenCalledTimes(2);
       expect(sendSpy).toHaveBeenCalledTimes(2);
@@ -180,7 +182,7 @@ describe('dynamo-item-dao', () => {
 
     test('should reject if there was an error calling DynamoDB', async () => {
       sendSpy.mockRejectedValue('error');
-      await expect(sut.getAll('primary#id')).rejects.toBe('error');
+      await expect(sut.getAll('id')).rejects.toBe('error');
     });
   });
 
@@ -276,4 +278,30 @@ describe('dynamo-item-dao', () => {
       expect(sendSpy).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe('delete', () => {
+    test('should remove a single item from DynamoDB', async () => {
+      sendSpy.mockResolvedValue({});
+
+      await sut.delete('id', 'value');
+
+      expect(deleteItemCommandSpy).toHaveBeenCalledWith({
+        TableName: 'Table',
+        Key: {
+          pk: { S: 'primary#id' },
+          sk: { S: 'sort#value' }
+        }
+      });
+      expect(sendSpy).toHaveBeenCalled();
+    });
+
+    test('should reject if there was an error calling DynamoDB', async () => {
+      sendSpy.mockRejectedValue('error');
+
+      await expect(sut.delete('id', 'value')).rejects.toBe('error');
+
+      expect(deleteItemCommandSpy).toHaveBeenCalledTimes(1);
+      expect(sendSpy).toHaveBeenCalledTimes(1);
+    })
+  })
 });

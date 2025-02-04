@@ -5,6 +5,7 @@ import { Construct } from "constructs";
 import { TracingConfig } from "aws-cdk-lib/aws-sns";
 import { AssetCode, Code } from "aws-cdk-lib/aws-lambda";
 import { Effect, PolicyStatement } from "aws-cdk-lib/aws-iam";
+import { EnvironmentVariableName } from "../../utils/env-loader";
 
 class TestStack extends Stack {
   constructor(scope: Construct, id: string, props: ApiHandlerProps) {
@@ -73,7 +74,8 @@ describe('api-handler construct', () => {
             Action: [
               'dynamodb:GetItem',
               'dynamodb:PutItem',
-              'dynamodb:Query'
+              'dynamodb:Query',
+              'dynamodb:DeleteItem'
             ],
             Resource: '*'
           }]
@@ -100,7 +102,7 @@ describe('api-handler construct', () => {
       },
       Environment: {
         Variables: {
-          DATA_TABLE_NAME: 'tst-table'
+          [EnvironmentVariableName.DATA_TABLE_NAME]: 'tst-table'
         }
       },
       Layers: [
@@ -129,7 +131,7 @@ describe('api-handler construct', () => {
     template.hasResourceProperties('AWS::Lambda::Function', {
       Environment: {
         Variables: {
-          DATA_TABLE_NAME: 'tst-table',
+          [EnvironmentVariableName.DATA_TABLE_NAME]: 'tst-table',
           'FOO': 'bar'
         }
       },

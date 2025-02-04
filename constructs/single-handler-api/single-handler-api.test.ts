@@ -1,10 +1,11 @@
-import { Match, Template } from "aws-cdk-lib/assertions";
+import { Template } from "aws-cdk-lib/assertions";
 import { SingleHandlerApi, SingleHandlerApiProps } from ".";
 import { App, Stack } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { ApiHandlerProps } from "../api-handler";
 import { AssetCode, Code } from "aws-cdk-lib/aws-lambda";
 import fs from 'fs';
+import { SpecRestApi, Stage } from "aws-cdk-lib/aws-apigateway";
 
 const apiSpec = {
   openapi: '3.0.0',
@@ -42,15 +43,18 @@ jest.mock('yaml', () => {
 });
 
 class TestStack extends Stack {
+  api: SingleHandlerApi;
+
   constructor(scope: Construct, id: string, props: SingleHandlerApiProps) {
     super(scope, id, props);
 
-    new SingleHandlerApi(this, 'aSingleHandlerApi', props);
+    this.api = new SingleHandlerApi(this, 'aSingleHandlerApi', props);
   }
 }
 
 describe('SingleHandlerApi construct', () => {
   let props: SingleHandlerApiProps;
+  let stack: TestStack;
   let template: Template
   let setLambdaPermissionSpy: jest.SpyInstance;
   let readFileSpy: jest.SpyInstance;
@@ -87,7 +91,7 @@ describe('SingleHandlerApi construct', () => {
       handlerTemplateKey: 'handler',
     };
     const app = new App();
-    const stack = new TestStack(app, 'aTestStack', props);
+    stack = new TestStack(app, 'aTestStack', props);
     readFileSpy.mockRestore();
     template = Template.fromStack(stack);
   });
@@ -137,4 +141,12 @@ describe('SingleHandlerApi construct', () => {
     expect(parseSpy).toHaveBeenCalled();
     expect(setLambdaPermissionSpy).toHaveBeenCalledWith('apigateway.amazonaws.com')
   });
+
+  test('should provide a getter for the resulting API', () => {
+    expect(stack.api.getApi()).toBeInstanceOf(SpecRestApi);
+  });
+
+  test('should provide a getter for the deployed stage', () => {
+    expect(stack.api.getStage()).toBeInstanceOf(Stage);
+  })
 });

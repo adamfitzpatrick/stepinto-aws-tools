@@ -3,8 +3,18 @@ import { ApiHandler, ApiHandlerProps } from "../api-handler";
 import * as fs from 'fs';
 import { compile } from 'handlebars';
 import { parse } from 'yaml';
-import { AccessLogFormat, ApiDefinition, ApiKey, CognitoUserPoolsAuthorizer, Deployment, EndpointType, LogGroupLogDestination, MethodLoggingLevel, SpecRestApi, Stage, UsagePlan } from "aws-cdk-lib/aws-apigateway";
-import { CfnOutput, Fn } from "aws-cdk-lib";
+import {
+  AccessLogFormat,
+  ApiDefinition,
+  ApiKey,
+  Deployment,
+  EndpointType,
+  LogGroupLogDestination,
+  MethodLoggingLevel,
+  SpecRestApi,
+  Stage,
+  UsagePlan
+} from "aws-cdk-lib/aws-apigateway";
 import { StepintoBaseConstruct } from "..";
 import { LogGroup } from "aws-cdk-lib/aws-logs";
 
@@ -16,15 +26,18 @@ export interface SingleHandlerApiProps extends ApiHandlerProps {
 }
 
 export class SingleHandlerApi extends StepintoBaseConstruct {
+  #api: SpecRestApi;
+  #stage: Stage;
+
   constructor(scope: Construct, id: string, props: SingleHandlerApiProps) {
     super(scope, id, props);
 
-    const apiHandler = new ApiHandler(this, this.generateId('ApiHandler'), props);
+    const apiHandler = new ApiHandler(this, this.generateId('handler'), props);
 
-    this.createApi(props, apiHandler);
+    this.#createApi(props, apiHandler);
   }
 
-  createApi(props: SingleHandlerApiProps, apiHandler: ApiHandler) {
+  #createApi(props: SingleHandlerApiProps, apiHandler: ApiHandler) {
     const specTemplate = compile(fs.readFileSync(props.apiSpecPath, { encoding: 'utf-8'}));
     const apiDefinition = parse(specTemplate({
       [props.authArnTemplateKey]: props.userPoolArn,
@@ -32,7 +45,7 @@ export class SingleHandlerApi extends StepintoBaseConstruct {
       region: props.env.region
     }));
 
-    const api = new SpecRestApi(this, this.generateId('rest-api'), {
+    this.#api = new SpecRestApi(this, this.generateId('rest-api'), {
       apiDefinition: ApiDefinition.fromInline(apiDefinition),
       cloudWatchRole: true,
       deploy: false,
@@ -42,12 +55,12 @@ export class SingleHandlerApi extends StepintoBaseConstruct {
     });
     apiHandler.setLambdaPermission('apigateway.amazonaws.com');
 
-    const deployment = new Deployment(this, 'deployment', {
-      api
+    const deployment = new Deployment(this, this.generateId('deployment'), {
+      api: this.#api
     });
 
     const accessLogGroup = new LogGroup(this, this.generateId('access-log-group'), {});
-    const stage = new Stage(this, 'stage', {
+    this.#stage = new Stage(this, this.generateId('stage'), {
       accessLogDestination: new LogGroupLogDestination(accessLogGroup),
       accessLogFormat: AccessLogFormat.jsonWithStandardFields(),
       loggingLevel: MethodLoggingLevel.INFO,
@@ -69,6 +82,14 @@ export class SingleHandlerApi extends StepintoBaseConstruct {
       }
     });
     defaultUsagePlan.addApiKey(defaultApiKey);
-    defaultUsagePlan.addApiStage({stage});
+    defaultUsagePlan.addApiStage({ stage: this.#stage });
+  }
+
+  getApi() {
+    return this.#api;
+  }
+
+  getStage() {
+    return this.#stage;
   }
 }

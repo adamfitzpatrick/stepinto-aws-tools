@@ -1,8 +1,9 @@
 import { Construct } from "constructs";
 import { Effect, PolicyDocument, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import { ApplicationLogLevel, Code, Function as LambdaFunction, LayerVersion, LoggingFormat, Runtime, Tracing } from 'aws-cdk-lib/aws-lambda'
-import { Duration, Fn } from "aws-cdk-lib";
+import { Duration } from "aws-cdk-lib";
 import { StepintoBaseConstruct, StepintoBaseConstructProps } from "..";
+import { EnvironmentVariableName } from "../../utils/env-loader";
 
 const SECRETS_LAMBDA_EXTENSION_ARN =
   'arn:aws:lambda:us-west-2:345057560386:layer:AWS-Parameters-and-Secrets-Lambda-Extension:12';
@@ -54,7 +55,8 @@ export class ApiHandler extends StepintoBaseConstruct {
         actions: [
           'dynamodb:GetItem',
           'dynamodb:PutItem',
-          'dynamodb:Query'
+          'dynamodb:Query',
+          'dynamodb:DeleteItem'
         ],
         resources: ['*']
       }),
@@ -87,10 +89,10 @@ export class ApiHandler extends StepintoBaseConstruct {
     
     const additionalEnvironmentVariables = props.additionalEnvironmentVariables || {};
     const environment = {
-      DATA_TABLE_NAME: this.generateEnvGenericName(props.dataTableName),
+      [EnvironmentVariableName.DATA_TABLE_NAME]: this.generateEnvGenericName(props.dataTableName),
       ...additionalEnvironmentVariables
     }
-    this._lambda = new LambdaFunction(this, this.generateId('handler'), {
+    this._lambda = new LambdaFunction(this, this.generateId('function'), {
       functionName: this.generateName('handler'),
       runtime: Runtime.NODEJS_20_X,
       code: Code.fromAsset(props.handlerPath),
